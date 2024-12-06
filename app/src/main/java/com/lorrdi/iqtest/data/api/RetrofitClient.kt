@@ -1,6 +1,8 @@
 package com.lorrdi.iqtest.data.api
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import dagger.Module
 import dagger.Provides
@@ -24,7 +26,13 @@ object RetrofitClient {
     @Singleton
     fun provideRetrofit(): Retrofit = Retrofit.Builder()
         .baseUrl("https://api.hh.ru/")
-        .addConverterFactory(JacksonConverterFactory.create(ObjectMapper().registerKotlinModule()))
+        .addConverterFactory(
+            JacksonConverterFactory.create(
+                ObjectMapper().registerKotlinModule().enable(
+                    SerializationFeature.WRAP_ROOT_VALUE
+                ).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            )
+        )
         .client(client)
         .build()
 

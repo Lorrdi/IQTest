@@ -5,6 +5,10 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import com.lorrdi.iqtest.data.paging.VacancyPagingSource
 import com.lorrdi.iqtest.data.api.HhApiService
+import com.lorrdi.iqtest.data.models.Area
+import com.lorrdi.iqtest.data.models.Employment
+import com.lorrdi.iqtest.data.models.Experience
+import com.lorrdi.iqtest.data.models.Schedule
 import com.lorrdi.iqtest.data.models.Vacancy
 import com.lorrdi.iqtest.domain.repositories.VacancyRepository
 import kotlinx.coroutines.flow.Flow
@@ -16,10 +20,10 @@ class VacancyRepositoryImpl @Inject constructor(
 
     override fun getPagedVacancies(
         query: String?,
-        experience: String?,
-        employment: String?,
-        schedule: String?,
-        area: String?
+        experience: List<Experience>?,
+        employment: List<Employment>?,
+        schedule: List<Schedule>?,
+        area: List<String>?
     ): Flow<PagingData<Vacancy>> {
         return Pager(
             config = PagingConfig(
@@ -39,4 +43,5 @@ class VacancyRepositoryImpl @Inject constructor(
         ).flow
     }
 }
+
 

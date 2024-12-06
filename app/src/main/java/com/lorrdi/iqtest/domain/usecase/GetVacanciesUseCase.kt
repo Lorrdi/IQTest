@@ -7,7 +7,6 @@ import javax.inject.Inject
 class GetVacanciesUseCase @Inject constructor(
     private val hhApiService: HhApiService
 ) {
-
     suspend operator fun invoke(
         query: String?,
         experience: String?,

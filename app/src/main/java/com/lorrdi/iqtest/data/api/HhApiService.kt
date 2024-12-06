@@ -1,5 +1,7 @@
 package com.lorrdi.iqtest.data.api
 
+import com.lorrdi.iqtest.data.models.FiltersResponse
+import com.lorrdi.iqtest.data.models.Region
 import com.lorrdi.iqtest.data.models.VacanciesResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -15,4 +17,11 @@ interface HhApiService {
         @Query("page") page: Int,
         @Query("per_page") perPage: Int
     ): VacanciesResponse
+
+    @GET("dictionaries")
+    suspend fun getFilters(): FiltersResponse
+
+    @GET("areas")
+    suspend fun getAreas(): List<Region>
+
 }

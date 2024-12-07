@@ -1,13 +1,12 @@
 package com.lorrdi.iqtest.domain.repositories
 
 import androidx.paging.PagingData
-import com.lorrdi.iqtest.data.models.Area
-import com.lorrdi.iqtest.data.models.Employment
-import com.lorrdi.iqtest.data.models.Experience
-import com.lorrdi.iqtest.data.models.FiltersResponse
-import com.lorrdi.iqtest.data.models.Region
-import com.lorrdi.iqtest.data.models.Schedule
-import com.lorrdi.iqtest.data.models.Vacancy
+import com.lorrdi.iqtest.data.dto.Employment
+import com.lorrdi.iqtest.data.dto.Experience
+import com.lorrdi.iqtest.data.dto.Filters
+import com.lorrdi.iqtest.data.dto.Region
+import com.lorrdi.iqtest.data.dto.Schedule
+import com.lorrdi.iqtest.data.dto.Vacancy
 import kotlinx.coroutines.flow.Flow
 
 interface VacancyRepository {
@@ -20,6 +19,6 @@ interface VacancyRepository {
         orderBy: String
     ): Flow<PagingData<Vacancy>>
 
-    suspend fun getFilters(): FiltersResponse
+    suspend fun getFilters(): Filters
     suspend fun getAreas(): List<Region>
 }

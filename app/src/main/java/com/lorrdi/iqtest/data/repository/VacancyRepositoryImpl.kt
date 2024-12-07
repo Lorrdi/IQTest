@@ -3,13 +3,13 @@ package com.lorrdi.iqtest.data.repository
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import com.lorrdi.iqtest.data.api.HhApiService
-import com.lorrdi.iqtest.data.models.Employment
-import com.lorrdi.iqtest.data.models.Experience
-import com.lorrdi.iqtest.data.models.FiltersResponse
-import com.lorrdi.iqtest.data.models.Region
-import com.lorrdi.iqtest.data.models.Schedule
-import com.lorrdi.iqtest.data.models.Vacancy
+import com.lorrdi.iqtest.data.remote.HhApiService
+import com.lorrdi.iqtest.data.dto.Employment
+import com.lorrdi.iqtest.data.dto.Experience
+import com.lorrdi.iqtest.data.dto.Filters
+import com.lorrdi.iqtest.data.dto.Region
+import com.lorrdi.iqtest.data.dto.Schedule
+import com.lorrdi.iqtest.data.dto.Vacancy
 import com.lorrdi.iqtest.data.paging.VacancyPagingSource
 import com.lorrdi.iqtest.domain.repositories.VacancyRepository
 import kotlinx.coroutines.flow.Flow
@@ -46,7 +46,7 @@ class VacancyRepositoryImpl @Inject constructor(
         ).flow
     }
 
-    override suspend fun getFilters(): FiltersResponse {
+    override suspend fun getFilters(): Filters {
         return hhApiService.getFilters()
     }
 

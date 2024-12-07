@@ -1,7 +1,6 @@
 package com.lorrdi.iqtest.domain.usecase
 
-import com.lorrdi.iqtest.data.api.HhApiService
-import com.lorrdi.iqtest.data.models.Region
+import com.lorrdi.iqtest.data.dto.Region
 import com.lorrdi.iqtest.domain.repositories.VacancyRepository
 import javax.inject.Inject
 

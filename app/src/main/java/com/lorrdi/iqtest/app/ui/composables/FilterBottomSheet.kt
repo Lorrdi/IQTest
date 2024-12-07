@@ -36,7 +36,7 @@ fun FilterBottomSheet(
             .padding(16.dp)
             .verticalScroll(scrollState)
     ) {
-        // States for selected options
+
         val selectedExperience = remember { mutableStateListOf<String>() }
         val selectedEmployment = remember { mutableStateListOf<String>() }
         val selectedSchedule = remember { mutableStateListOf<String>() }
@@ -54,7 +54,6 @@ fun FilterBottomSheet(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // List of checkboxes for selecting employment types
         CheckboxList(
             label = "Тип занятости",
             selectedItems = selectedEmployment,
@@ -66,7 +65,6 @@ fun FilterBottomSheet(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // List of checkboxes for selecting schedules
         CheckboxList(
             label = "График работы",
             selectedItems = selectedSchedule,
@@ -95,7 +93,6 @@ fun FilterBottomSheet(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Apply and Cancel buttons
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -113,7 +110,7 @@ fun FilterBottomSheet(
                             selectedEmployment.contains(it.name)
                         },
                         schedule = availableFilters?.schedule?.filter { selectedSchedule.contains(it.name) },
-                        area = selectedRegionMap.values.toList() // Use region IDs
+                        area = selectedRegionMap.values.toList()
                     )
                 )
                 onClose()

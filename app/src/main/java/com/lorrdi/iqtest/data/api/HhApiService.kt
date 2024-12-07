@@ -15,7 +15,8 @@ interface HhApiService {
         @Query("schedule") schedule: String?,
         @Query("area") area: String?,
         @Query("page") page: Int,
-        @Query("per_page") perPage: Int
+        @Query("per_page") perPage: Int,
+        @Query("order_by") orderBy:String
     ): VacanciesResponse
 
     @GET("dictionaries")

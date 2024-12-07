@@ -1,17 +1,15 @@
 package com.lorrdi.iqtest.app.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.lorrdi.iqtest.data.api.HhApiService
-import com.lorrdi.iqtest.data.models.Area
-import com.lorrdi.iqtest.data.models.City
 import com.lorrdi.iqtest.data.models.FiltersResponse
 import com.lorrdi.iqtest.data.models.Region
 import com.lorrdi.iqtest.data.models.Vacancy
-import com.lorrdi.iqtest.domain.repositories.VacancyRepository
+import com.lorrdi.iqtest.domain.usecase.GetAreasUseCase
+import com.lorrdi.iqtest.domain.usecase.GetFiltersUseCase
+import com.lorrdi.iqtest.domain.usecase.GetPagedVacanciesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -25,61 +23,53 @@ import javax.inject.Inject
 
 @HiltViewModel
 class VacanciesViewModel @Inject constructor(
-    private val repository: VacancyRepository,
-    private val hhApiService: HhApiService
+    private val getFiltersUseCase: GetFiltersUseCase,
+    private val getAreasUseCase: GetAreasUseCase,
+    private val getPagedVacanciesUseCase: GetPagedVacanciesUseCase
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow<String?>(null)
-    private val _filters = MutableStateFlow<FiltersResponse?>(null)
-    private val _availableFilters = MutableStateFlow<FiltersResponse?>(null)
-
     val searchQuery: StateFlow<String?> = _searchQuery.asStateFlow()
+
+    private val _filters = MutableStateFlow<FiltersResponse?>(null)
     val filters: StateFlow<FiltersResponse?> = _filters.asStateFlow()
-    val availableFilters: StateFlow<FiltersResponse?> = _availableFilters.asStateFlow()
+
+    private val _sorting = MutableStateFlow("relevance")
+    val sorting: StateFlow<String> = _sorting.asStateFlow()
 
     private val _availableRegions = MutableStateFlow<List<Region>>(emptyList())
-    private val _availableCities =
-        MutableStateFlow<List<City>>(emptyList()) // Новое состояние для городов
-
     val availableRegions: StateFlow<List<Region>> = _availableRegions.asStateFlow()
-    val availableCities: StateFlow<List<City>> =
-        _availableCities.asStateFlow() // Получаем доступ к городам
 
+    private val _availableFilters = MutableStateFlow<FiltersResponse?>(null)
+    val availableFilters: StateFlow<FiltersResponse?> = _availableFilters.asStateFlow()
 
-    init {
-        getAvailableFilters()
-        getAvailableRegions()
+    private val _errorState = MutableStateFlow<String?>(null)
+    val errorState: StateFlow<String?> = _errorState.asStateFlow()
+
+    private fun handleException(exception: Exception) {
+        _errorState.value = exception.localizedMessage ?: "Неизвестная ошибка"
     }
 
-    private fun getAvailableRegions() {
+    fun clearError() {
+        _errorState.value = null
+    }
+
+    fun fetchAvailableFilters() {
         viewModelScope.launch {
             try {
-                val response = hhApiService.getAreas() // Get region data
-                _availableRegions.value = response // Assign to the state variable
-
-                // Flattening regions and areas to get cities
-                val cities = response.flatMap { region ->
-                    region.areas.flatMap { area ->
-                        area.areas?.map { city ->
-                            City(id = city.id, name = city.name) // Mapping the city to City object
-                        } ?: emptyList()
-                    }
-                }
-                _availableCities.value = cities // Update cities state
+                _availableFilters.value = getFiltersUseCase()
             } catch (e: Exception) {
-                Log.e("VacanciesViewModel", "Error fetching regions", e)
+                handleException(e)
             }
         }
     }
 
-    private fun getAvailableFilters() {
+    fun fetchAvailableRegions() {
         viewModelScope.launch {
             try {
-                val response = hhApiService.getFilters()
-                Log.d("DEBUG_F", response.toString())
-                _availableFilters.value = response
+                _availableRegions.value = getAreasUseCase()
             } catch (e: Exception) {
-                throw e
+                handleException(e)
             }
         }
     }
@@ -88,17 +78,17 @@ class VacanciesViewModel @Inject constructor(
     val pagedVacancies: Flow<PagingData<Vacancy>> = combine(
         searchQuery,
         filters,
-        availableFilters,
-        availableRegions
-    ) { query, filters, availableFilters, _ ->
-        Triple(query, filters, availableFilters)
-    }.flatMapLatest { (query, filters) ->
-        repository.getPagedVacancies(
+        sorting
+    ) { query, filters, sorting ->
+        Triple(query, filters, sorting)
+    }.flatMapLatest { (query, filters, sorting) ->
+        getPagedVacanciesUseCase(
             query = query,
             experience = filters?.experience,
             employment = filters?.employment,
             schedule = filters?.schedule,
             area = filters?.area,
+            orderBy = sorting
         )
     }.cachedIn(viewModelScope)
 
@@ -109,5 +99,12 @@ class VacanciesViewModel @Inject constructor(
     fun updateFilters(filters: FiltersResponse) {
         _filters.value = filters
     }
-}
 
+    fun updateSorting(option: String) {
+        _sorting.value = when (option) {
+            "По релевантности" -> "relevance"
+            "По дате" -> "publication_time"
+            else -> "relevance"
+        }
+    }
+}

@@ -4,14 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.lorrdi.iqtest.data.dto.ErrorState
 import com.lorrdi.iqtest.data.dto.Filters
 import com.lorrdi.iqtest.data.dto.Region
-import com.lorrdi.iqtest.domain.enums.SortingOption
 import com.lorrdi.iqtest.data.dto.Vacancy
 import com.lorrdi.iqtest.domain.entities.VacancySearchParams
-import com.lorrdi.iqtest.domain.usecase.GetAreasUseCase
+import com.lorrdi.iqtest.domain.enums.SortingOption
 import com.lorrdi.iqtest.domain.usecase.GetFiltersUseCase
 import com.lorrdi.iqtest.domain.usecase.GetPagedVacanciesUseCase
+import com.lorrdi.iqtest.domain.usecase.GetRegionsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -21,12 +22,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
 
 @HiltViewModel
 class VacanciesViewModel @Inject constructor(
     private val getFiltersUseCase: GetFiltersUseCase,
-    private val getAreasUseCase: GetAreasUseCase,
+    private val getRegionsUseCase: GetRegionsUseCase,
     private val getPagedVacanciesUseCase: GetPagedVacanciesUseCase
 ) : ViewModel() {
 
@@ -61,7 +64,7 @@ class VacanciesViewModel @Inject constructor(
     fun fetchAvailableRegions() {
         viewModelScope.launch {
             try {
-                _availableRegions.value = getAreasUseCase()
+                _availableRegions.value = getRegionsUseCase()
             } catch (e: Exception) {
                 handleException(e)
             }
@@ -97,8 +100,13 @@ class VacanciesViewModel @Inject constructor(
     fun updateSorting(option: SortingOption) {
         _sorting.value = option
     }
-    private fun handleException(exception: Exception) {
-        _errorState.value = exception.localizedMessage ?: "Неизвестная ошибка"
+
+    private fun handleException(exception: Exception): ErrorState {
+        return when (exception) {
+            is IOException -> ErrorState.NetworkError
+            is HttpException -> ErrorState.ServerError(exception.code())
+            else -> ErrorState.UnknownError(exception.message ?: "Unknown error")
+        }
     }
 
     fun clearError() {

@@ -23,6 +23,6 @@ interface HhApiService {
     suspend fun getFilters(): Filters
 
     @GET("areas")
-    suspend fun getAreas(): List<Region>
+    suspend fun getRegions(): List<Region>
 
 }

@@ -50,7 +50,7 @@ class VacancyRepositoryImpl @Inject constructor(
         return hhApiService.getFilters()
     }
 
-    override suspend fun getAreas(): List<Region> {
-        return hhApiService.getAreas()
+    override suspend fun getRegions(): List<Region> {
+        return hhApiService.getRegions()
     }
 }

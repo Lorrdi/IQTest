@@ -12,14 +12,14 @@ import androidx.compose.material.pullrefresh.PullRefreshState
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.paging.LoadState
-import com.lorrdi.iqtest.data.dto.Vacancy
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
+import com.lorrdi.iqtest.data.dto.Vacancy
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -34,7 +34,6 @@ fun VacancyList(
             .fillMaxSize()
             .pullRefresh(refreshState)
     ) {
-
         LazyColumn(contentPadding = contentPadding) {
             if (vacancies.itemCount == 0 && vacancies.loadState.refresh !is LoadState.Loading) {
                 item {
@@ -76,7 +75,6 @@ fun VacancyList(
                 else -> Unit
             }
         }
-
 
         PullRefreshIndicator(
             refreshing = refreshing,

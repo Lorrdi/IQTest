@@ -20,5 +20,5 @@ interface VacancyRepository {
     ): Flow<PagingData<Vacancy>>
 
     suspend fun getFilters(): Filters
-    suspend fun getAreas(): List<Region>
+    suspend fun getRegions(): List<Region>
 }

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.lorrdi.iqtest.data.dto.Filters
 import com.lorrdi.iqtest.data.dto.Region
 import com.lorrdi.iqtest.data.paging.VacancyPagingSource.Companion.DEFAULT_AREA
+import com.lorrdi.iqtest.domain.entities.FilterSelections
 import com.lorrdi.iqtest.presentation.ui.components.CheckboxList
 
 @Composable
@@ -31,66 +32,57 @@ fun FilterBottomSheetContent(
     onApplyFilters: (Filters) -> Unit
 ) {
     val scrollState = rememberScrollState()
+
+    val filterSelections = rememberSelectedFilters(filters, availableRegions)
+
     Column(
         modifier = Modifier
             .padding(16.dp)
             .verticalScroll(scrollState)
     ) {
-
-        val selectedExperience = remember { mutableStateListOf<String>() }
-        val selectedEmployment = remember { mutableStateListOf<String>() }
-        val selectedSchedule = remember { mutableStateListOf<String>() }
-        val selectedRegionMap =
-            remember { mutableStateMapOf<String, String>() }
-
-        CheckboxList(
+        FilterSection(
             label = "Опыт работы",
-            selectedItems = selectedExperience,
-            items = availableFilters?.experience?.map { it.name } ?: listOf(),
+            selectedItems = filterSelections.selectedExperience,
+            availableItems = availableFilters?.experience?.map { it.name } ?: emptyList(),
             onItemSelectionChanged = { id, isChecked ->
-                if (isChecked) selectedExperience.add(id) else selectedExperience.remove(id)
+                updateSelectionList(filterSelections.selectedExperience, id, isChecked)
             }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        CheckboxList(
+        FilterSection(
             label = "Тип занятости",
-            selectedItems = selectedEmployment,
-            items = availableFilters?.employment?.map { it.name } ?: listOf(),
+            selectedItems = filterSelections.selectedEmployment,
+            availableItems = availableFilters?.employment?.map { it.name } ?: emptyList(),
             onItemSelectionChanged = { id, isChecked ->
-                if (isChecked) selectedEmployment.add(id) else selectedEmployment.remove(id)
+                updateSelectionList(filterSelections.selectedEmployment, id, isChecked)
             }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        CheckboxList(
+        FilterSection(
             label = "График работы",
-            selectedItems = selectedSchedule,
-            items = availableFilters?.schedule?.map { it.name } ?: listOf(),
+            selectedItems = filterSelections.selectedSchedule,
+            availableItems = availableFilters?.schedule?.map { it.name } ?: emptyList(),
             onItemSelectionChanged = { id, isChecked ->
-                if (isChecked) selectedSchedule.add(id) else selectedSchedule.remove(id)
+                updateSelectionList(filterSelections.selectedSchedule, id, isChecked)
             }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        CheckboxList(
+        FilterSection(
             label = "Регион",
-            selectedItems = selectedRegionMap.keys.toList(),
-            items = availableRegions.take(20).map { it.name },
+            selectedItems = filterSelections.selectedRegionMap.keys.toList(),
+            availableItems = availableRegions.take(20).map { it.name },
             onItemSelectionChanged = { name, isChecked ->
                 val regionId = availableRegions.firstOrNull { it.name == name }?.id
                 if (regionId != null) {
                     if (isChecked) {
-                        selectedRegionMap[name] = regionId
+                        filterSelections.selectedRegionMap[name] = regionId
                     } else {
-                        selectedRegionMap.remove(name)
+                        filterSelections.selectedRegionMap.remove(name)
                     }
                 }
             }
         )
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(
@@ -100,17 +92,28 @@ fun FilterBottomSheetContent(
             Button(onClick = onClose) {
                 Text("Отмена")
             }
+
+            Button(onClick = { resetFilters(filterSelections) }) {
+                Text("Сбросить")
+            }
+
             Button(onClick = {
                 onApplyFilters(
                     filters.copy(
                         experience = availableFilters?.experience?.filter {
-                            selectedExperience.contains(it.name)
+                            filterSelections.selectedExperience.contains(it.name)
                         },
                         employment = availableFilters?.employment?.filter {
-                            selectedEmployment.contains(it.name)
+                            filterSelections.selectedEmployment.contains(it.name)
                         },
-                        schedule = availableFilters?.schedule?.filter { selectedSchedule.contains(it.name) },
-                        area = if (selectedRegionMap.isEmpty()) listOf(DEFAULT_AREA) else selectedRegionMap.values.toList()
+                        schedule = availableFilters?.schedule?.filter {
+                            filterSelections.selectedSchedule.contains(it.name)
+                        },
+                        area = if (filterSelections.selectedRegionMap.isEmpty()) {
+                            listOf(DEFAULT_AREA)
+                        } else {
+                            filterSelections.selectedRegionMap.values.toList()
+                        }
                     )
                 )
                 onClose()
@@ -119,4 +122,68 @@ fun FilterBottomSheetContent(
             }
         }
     }
+}
+
+@Composable
+fun FilterSection(
+    label: String,
+    selectedItems: List<String>,
+    availableItems: List<String>,
+    onItemSelectionChanged: (String, Boolean) -> Unit
+) {
+    CheckboxList(
+        label = label,
+        selectedItems = selectedItems,
+        items = availableItems,
+        onItemSelectionChanged = onItemSelectionChanged
+    )
+    Spacer(modifier = Modifier.height(16.dp))
+}
+
+@Composable
+fun rememberSelectedFilters(
+    filters: Filters,
+    availableRegions: List<Region>
+): FilterSelections {
+    val selectedExperience = remember {
+        mutableStateListOf<String>().apply {
+            addAll(filters.experience?.map { it.name } ?: emptyList())
+        }
+    }
+    val selectedEmployment = remember {
+        mutableStateListOf<String>().apply {
+            addAll(filters.employment?.map { it.name } ?: emptyList())
+        }
+    }
+    val selectedSchedule = remember {
+        mutableStateListOf<String>().apply {
+            addAll(filters.schedule?.map { it.name } ?: emptyList())
+        }
+    }
+    val selectedRegionMap = remember {
+        mutableStateMapOf<String, String>().apply {
+            filters.area?.forEach { regionId ->
+                availableRegions.firstOrNull { it.id == regionId }?.name?.let { regionName ->
+                    this[regionName] = regionId
+                }
+            }
+        }
+    }
+    return FilterSelections(
+        selectedExperience = selectedExperience,
+        selectedEmployment = selectedEmployment,
+        selectedSchedule = selectedSchedule,
+        selectedRegionMap = selectedRegionMap
+    )
+}
+
+fun resetFilters(filterSelections: FilterSelections) {
+    filterSelections.selectedExperience.clear()
+    filterSelections.selectedEmployment.clear()
+    filterSelections.selectedSchedule.clear()
+    filterSelections.selectedRegionMap.clear()
+}
+
+fun updateSelectionList(selectionList: MutableList<String>, item: String, isChecked: Boolean) {
+    if (isChecked) selectionList.add(item) else selectionList.remove(item)
 }

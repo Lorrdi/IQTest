@@ -1,8 +1,11 @@
 package com.lorrdi.iqtest.presentation.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -10,6 +13,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
@@ -34,46 +38,52 @@ fun SearchBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .background(
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(16.dp)
+            )
             .padding(horizontal = 16.dp)
-            .padding(top = 48.dp),
+            .padding(top = 48.dp)
+        ,
         verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
-            modifier = Modifier.weight(1f),
-            placeholder = { Text(text = "Поиск вакансий...") },
+            placeholder = { Text(text = "Поиск...") },
             singleLine = true,
             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { onSearch() }),
-            shape = RoundedCornerShape(8.dp),
-            trailingIcon = {
-                Row {
-                    IconButton(onClick = onFilterClick) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_filter),
-                            contentDescription = "Открыть фильтры"
-                        )
-                    }
-                    IconButton(onClick = onSortClick) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_sort),
-                            contentDescription = "Сортировка"
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = isSortingMenuExpanded,
-                        onDismissRequest = { onSortClick() }
-                    ) {
-                        SortingOption.entries.forEach { option ->
-                            DropdownMenuItem(
-                                text = { Text(option.displayName) },
-                                onClick = { onSortingOptionSelected(option) }
-                            )
-                        }
-                    }
-                }
-            }
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(16.dp)
         )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        IconButton(onClick = onFilterClick) {
+            Icon(
+                painter = painterResource(R.drawable.ic_filter),
+                contentDescription = "Фильтры"
+            )
+        }
+
+        IconButton(onClick = onSortClick) {
+            Icon(
+                painter = painterResource(R.drawable.ic_sort),
+                contentDescription = "Сортировка"
+            )
+        }
+
+        DropdownMenu(
+            expanded = isSortingMenuExpanded,
+            onDismissRequest = { onSortClick() }
+        ) {
+            SortingOption.entries.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option.displayName) },
+                    onClick = { onSortingOptionSelected(option) }
+                )
+            }
+        }
     }
 }

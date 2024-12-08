@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.lorrdi.iqtest.data.dto.Vacancy
+import com.lorrdi.iqtest.presentation.util.formatSalary
 
 @Composable
 fun VacancyItem(vacancy: Vacancy) {
@@ -70,8 +71,9 @@ fun VacancyItem(vacancy: Vacancy) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = vacancy.salary?.let { "${it.from}-${it.to ?: "N/A"} ${it.currency}" }
-                    ?: "Salary not specified",
+                text = vacancy.salary?.let { salary ->
+                    formatSalary(salary.from, salary.to, salary.currency)
+                } ?: "Зарплата не указана",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -80,14 +82,14 @@ fun VacancyItem(vacancy: Vacancy) {
 
             vacancy.area.name.let {
                 Text(
-                    text = "Location: $it",
+                    text = "Город: $it",
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
 
             Text(
-                text = "Published on: ${vacancy.publishedAt}",
+                text = "Опубликована: ${vacancy.publishedAt.take(10)}",
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
@@ -95,3 +97,5 @@ fun VacancyItem(vacancy: Vacancy) {
         }
     }
 }
+
+

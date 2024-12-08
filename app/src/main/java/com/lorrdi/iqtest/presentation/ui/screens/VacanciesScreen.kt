@@ -65,8 +65,6 @@ fun VacanciesScreen(
             onSearchQueryChange = { searchQuery = it },
             onSearch = { viewModel.updateSearchQuery(searchQuery) },
             onFilterClick = { isFilterSheetOpen = true },
-            onSortClick = { isSortingMenuExpanded = true },
-            isSortingMenuExpanded = isSortingMenuExpanded,
             onSortingOptionSelected = { option ->
                 selectedSorting = option
                 isSortingMenuExpanded = false

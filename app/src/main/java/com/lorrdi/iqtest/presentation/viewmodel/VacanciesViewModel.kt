@@ -48,8 +48,8 @@ class VacanciesViewModel @Inject constructor(
     private val _availableFilters = MutableStateFlow<Filters?>(null)
     val availableFilters: StateFlow<Filters?> = _availableFilters.asStateFlow()
 
-    private val _errorState = MutableStateFlow<String?>(null)
-    val errorState: StateFlow<String?> = _errorState.asStateFlow()
+    private val _errorState = MutableStateFlow<ErrorState?>(null)
+    val errorState: StateFlow<ErrorState?> = _errorState.asStateFlow()
 
     fun fetchAvailableFilters() {
         viewModelScope.launch {
@@ -80,12 +80,7 @@ class VacanciesViewModel @Inject constructor(
         VacancySearchParams(query, filters, sorting)
     }.flatMapLatest { params ->
         getPagedVacanciesUseCase(
-            query = params.query,
-            experience = params.filters?.experience,
-            employment = params.filters?.employment,
-            schedule = params.filters?.schedule,
-            area = params.filters?.area,
-            orderBy = params.sorting.apiValue
+            params = params
         )
     }.cachedIn(viewModelScope)
 

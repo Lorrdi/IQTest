@@ -17,10 +17,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
@@ -34,55 +36,44 @@ class VacanciesViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow<String?>(null)
-    val searchQuery: StateFlow<String?> = _searchQuery.asStateFlow()
-
     private val _filters = MutableStateFlow<Filters?>(null)
-    val filters: StateFlow<Filters?> = _filters.asStateFlow()
-
     private val _sorting = MutableStateFlow(SortingOption.RELEVANCE)
+    private val _isFilterSheetOpen = MutableStateFlow(false)
+
+    val searchQuery: StateFlow<String?> = _searchQuery.asStateFlow()
+    val filters: StateFlow<Filters?> = _filters.asStateFlow()
     val sorting: StateFlow<SortingOption> = _sorting.asStateFlow()
+    val isFilterSheetOpen: StateFlow<Boolean> = _isFilterSheetOpen.asStateFlow()
 
-    private val _availableRegions = MutableStateFlow<List<Region>>(emptyList())
-    val availableRegions: StateFlow<List<Region>> = _availableRegions.asStateFlow()
-
-    private val _availableFilters = MutableStateFlow<Filters?>(null)
-    val availableFilters: StateFlow<Filters?> = _availableFilters.asStateFlow()
+    val availableRegions: StateFlow<List<Region>> =
+        fetchWithStateFlow(emptyList()) { getRegionsUseCase() }
+    val availableFilters: StateFlow<Filters> = fetchWithStateFlow(Filters()) { getFiltersUseCase() }
 
     private val _errorState = MutableStateFlow<ErrorState?>(null)
     val errorState: StateFlow<ErrorState?> = _errorState.asStateFlow()
 
-    fun fetchAvailableFilters() {
-        viewModelScope.launch {
-            try {
-                _availableFilters.value = getFiltersUseCase()
-            } catch (e: Exception) {
-                handleException(e)
-            }
-        }
-    }
-
-    fun fetchAvailableRegions() {
-        viewModelScope.launch {
-            try {
-                _availableRegions.value = getRegionsUseCase()
-            } catch (e: Exception) {
-                handleException(e)
-            }
-        }
-    }
+    private val vacancyParams = combine(
+        _searchQuery,
+        _filters,
+        _sorting
+    ) { query, filters, sorting ->
+        VacancySearchParams(
+            query = query ?: "",
+            filters = filters ?: Filters(),
+            sorting = sorting
+        )
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.Lazily,
+        VacancySearchParams("", Filters(), sorting.value)
+    )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val pagedVacancies: Flow<PagingData<Vacancy>> = combine(
-        searchQuery,
-        filters,
-        sorting
-    ) { query, filters, sorting ->
-        VacancySearchParams(query, filters, sorting)
-    }.flatMapLatest { params ->
-        getPagedVacanciesUseCase(
-            params = params
-        )
-    }.cachedIn(viewModelScope)
+    val pagedVacancies: Flow<PagingData<Vacancy>> = vacancyParams
+        .flatMapLatest { params ->
+            getPagedVacanciesUseCase(params)
+        }
+        .cachedIn(viewModelScope)
 
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
@@ -96,6 +87,33 @@ class VacanciesViewModel @Inject constructor(
         _sorting.value = option
     }
 
+    fun clearError() {
+        _errorState.value = null
+    }
+
+    fun openFilterSheet() {
+        _isFilterSheetOpen.value = true
+    }
+
+    fun closeFilterSheet() {
+        _isFilterSheetOpen.value = false
+    }
+
+    private fun <T> fetchWithStateFlow(
+        defaultValue: T,
+        block: suspend () -> T
+    ): StateFlow<T> {
+        val stateFlow = MutableStateFlow(defaultValue)
+        viewModelScope.launch {
+            try {
+                stateFlow.value = block()
+            } catch (e: Exception) {
+                _errorState.value = handleException(e)
+            }
+        }
+        return stateFlow.asStateFlow()
+    }
+
     private fun handleException(exception: Exception): ErrorState {
         return when (exception) {
             is IOException -> ErrorState.NetworkError
@@ -103,9 +121,6 @@ class VacanciesViewModel @Inject constructor(
             else -> ErrorState.UnknownError(exception.message ?: "Unknown error")
         }
     }
-
-    fun clearError() {
-        _errorState.value = null
-    }
 }
+
 
